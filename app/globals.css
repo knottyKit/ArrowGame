@@ -25,6 +25,12 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+.svg-white path{
+  fill: white;
+}
+.svg-white.match path{
+  fill: green;
+}
 
 @layer utilities {
   .text-balance {
