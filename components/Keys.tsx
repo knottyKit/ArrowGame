@@ -10,12 +10,10 @@ const Keys = () => {
   const [score, setScore] = useState<number>(0);
   const givenArrLength = 4;
   const [given, setGiven] = useState<number[]>([]);
-  const [isMatch, setIsMatch] = useState<boolean>(false);
   const [matches, setMatches] = useState<boolean[]>(
     new Array(givenArrLength).fill(false)
   );
 
-  // Ref to store the latest value of `arr` and `given`
   const arrRef = useRef(arr);
   const givenRef = useRef(given);
 
@@ -27,7 +25,6 @@ const Keys = () => {
     const currentArr = arrRef.current;
     const currentGiven = givenRef.current;
 
-    console.log("Comparing:", currentArr, currentGiven);
     if (currentArr.length !== currentGiven.length) {
       return false;
     }
@@ -44,7 +41,6 @@ const Keys = () => {
     const initialGiven = generateRandomArray(givenArrLength);
     setGiven(initialGiven);
     givenRef.current = initialGiven;
-    console.log("Initial given array:", initialGiven);
 
     const handleKeyPress = ({ key }: KeyboardEvent) => {
       let value: number | null = null;
@@ -68,9 +64,7 @@ const Keys = () => {
       if (value !== null) {
         setArr((prevArr) => {
           const newArr = [...prevArr, value];
-          console.log("Updated arr (before limiting):", newArr);
           const limitedArr = newArr.slice(0, givenArrLength);
-          console.log("Limited arr:", limitedArr);
           return limitedArr;
         });
       }
@@ -78,27 +72,14 @@ const Keys = () => {
 
     const handleSubmit = (e: KeyboardEvent) => {
       if (e.key === " ") {
-        console.log("Space key pressed");
-        console.log("Current arr:", arr);
-        console.log("Current given array:", given);
-
         if (areTheyEqual()) {
-          setScore((prevScore) => {
-            const newScore = prevScore + 1;
-            console.log("Score incremented:", newScore);
-            return newScore;
-          });
+          setScore((prevScore) => prevScore + 1);
           const newGiven = generateRandomArray(givenArrLength);
           setGiven(newGiven);
           givenRef.current = newGiven;
-          console.log("New given array:", newGiven);
-        } else {
-          console.log("Arrays are not equal");
         }
 
-        // Clear `arr` only after checking if arrays are equal
         setArr([]);
-        console.log("Arr cleared");
       }
     };
 
@@ -112,8 +93,13 @@ const Keys = () => {
   }, []);
 
   useEffect(() => {
-    // setIsMatch(areTheyEqual());
-    const newMatches = given.map((item, index) => arr[index] === item);
+    const newMatches = new Array(givenArrLength).fill(false);
+    arr.forEach((item, index) => {
+      if (index < givenArrLength && item === given[index]) {
+        newMatches[index] = true;
+      }
+    });
+
     setMatches(newMatches);
   }, [arr, given]);
 
@@ -125,32 +111,28 @@ const Keys = () => {
     givenRef.current = given;
   }, [given]);
 
-  const getArrowIcon = (index: number) => {
-    switch (index) {
+  // Function to determine the class based on match status
+  const getMatchClass = (index: number) => {
+    if (arr[index] === undefined) {
+      return "svg-white"; // Class when the index in arr is still undefined
+    }
+    return matches[index] ? "svg-white match" : "svg-white no-match"; // Class when there's a match or not
+  };
+
+  // Function to render the appropriate arrow icon
+  const renderArrowIcon = (index: number) => {
+    // Determine which arrow to render based on the given array
+    const arrowIndex = given[index];
+
+    switch (arrowIndex) {
       case 0:
-        return (
-          <ArrowUp
-            className={matches[index] ? "svg-white match" : "svg-white"}
-          />
-        );
+        return <ArrowUp className={getMatchClass(index)} />;
       case 1:
-        return (
-          <ArrowDown
-            className={matches[index] ? "svg-white match" : "svg-white"}
-          />
-        );
+        return <ArrowDown className={getMatchClass(index)} />;
       case 2:
-        return (
-          <ArrowLeft
-            className={matches[index] ? "svg-white match" : "svg-white"}
-          />
-        );
+        return <ArrowLeft className={getMatchClass(index)} />;
       case 3:
-        return (
-          <ArrowRight
-            className={matches[index] ? "svg-white match" : "svg-white"}
-          />
-        );
+        return <ArrowRight className={getMatchClass(index)} />;
       default:
         return null;
     }
@@ -163,8 +145,8 @@ const Keys = () => {
       <div>Given Array: {JSON.stringify(given)}</div>
       <div>Score: {score}</div>
       <div className="flex gap-6 w-full items-center">
-        {given.map((item, index) => (
-          <span key={index}>{getArrowIcon(item)}</span>
+        {given.map((_, index) => (
+          <span key={index}>{renderArrowIcon(index)}</span>
         ))}
       </div>
     </main>
