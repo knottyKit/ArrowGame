@@ -4,6 +4,7 @@ import ArrowUp from "../public/up.svg";
 import ArrowDown from "../public/down.svg";
 import ArrowLeft from "../public/left.svg";
 import ArrowRight from "../public/right.svg";
+import "../app/css/keys.css";
 
 const Keys = () => {
   const [arr, setArr] = useState<number[]>([]);
@@ -16,9 +17,21 @@ const Keys = () => {
 
   const arrRef = useRef(arr);
   const givenRef = useRef(given);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   const generateRandomArray = (length: number) => {
-    return Array.from({ length }, () => Math.floor(Math.random() * 4));
+    const randomArray = Array.from({ length }, () =>
+      Math.floor(Math.random() * 4)
+    );
+
+    const timerElement = document.querySelector(".timer") as HTMLElement;
+    if (timerElement) {
+      timerElement.classList.remove("restart-animation");
+      void timerElement.offsetWidth;
+      timerElement.classList.add("restart-animation");
+    }
+    return randomArray;
   };
 
   const areTheyEqual = () => {
@@ -36,6 +49,29 @@ const Keys = () => {
     }
     return true;
   };
+
+  useEffect(() => {
+    const startInterval = () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      startTimeRef.current = Date.now();
+
+      intervalRef.current = setInterval(() => {
+        const newGiven = generateRandomArray(givenArrLength);
+        setGiven(newGiven);
+        givenRef.current = newGiven;
+      }, 5000);
+    };
+    startInterval();
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const initialGiven = generateRandomArray(givenArrLength);
@@ -73,10 +109,35 @@ const Keys = () => {
     const handleSubmit = (e: KeyboardEvent) => {
       if (e.key === " ") {
         if (areTheyEqual()) {
-          setScore((prevScore) => prevScore + 1);
+          const endTime = Date.now();
+          const startTime = startTimeRef.current || endTime;
+          const elapsedTime = (endTime - startTime) / 1000;
+
+          let points = 0;
+          if (elapsedTime <= 1.5) {
+            points = 3;
+            // console.log(`Elapsed time: ${elapsedTime}s - plus 3 points`);
+          } else if (elapsedTime > 1.5 && elapsedTime < 3) {
+            points = 2;
+            // console.log(`Elapsed time: ${elapsedTime}s - plus 2 points`);
+          } else if (elapsedTime >= 3) {
+            points = 1;
+            // console.log(`Elapsed time: ${elapsedTime}s - plus 1 point`);
+          }
+          setScore((prevScore) => prevScore + points);
           const newGiven = generateRandomArray(givenArrLength);
           setGiven(newGiven);
           givenRef.current = newGiven;
+
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+          }
+          startTimeRef.current = Date.now();
+          intervalRef.current = setInterval(() => {
+            const newGiven = generateRandomArray(givenArrLength);
+            setGiven(newGiven);
+            givenRef.current = newGiven;
+          }, 5000);
         }
 
         setArr([]);
@@ -89,6 +150,9 @@ const Keys = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
       document.removeEventListener("keydown", handleSubmit);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
     };
   }, []);
 
@@ -140,7 +204,6 @@ const Keys = () => {
 
   return (
     <main>
-      <button onClick={() => console.log("Log Array")}>Log Array</button>
       <div>Array: {JSON.stringify(arr)}</div>
       <div>Given Array: {JSON.stringify(given)}</div>
       <div>Score: {score}</div>
@@ -149,6 +212,7 @@ const Keys = () => {
           <span key={index}>{renderArrowIcon(index)}</span>
         ))}
       </div>
+      <div className="timer restart-animation w-[500px] h-[20px] border"></div>
     </main>
   );
 };
