@@ -1,3 +1,4 @@
+"use client";
 import Keys from "@/components/Keys";
 
 export default function Home() {

@@ -1,3 +1,4 @@
+import { NextUIProvider } from "@nextui-org/react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -16,7 +17,22 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <head>
+        {/* <link
+              rel="icon"
+              type="image/x-icon"
+              href={`${hostPathName}/images/favicon.png`}
+            /> */}
+        <title>Arrow Dash</title>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0"
+        ></meta>
+      </head>
+      <body className={inter.className}>
+        {" "}
+        <NextUIProvider>{children}</NextUIProvider>
+      </body>
     </html>
   );
 }
