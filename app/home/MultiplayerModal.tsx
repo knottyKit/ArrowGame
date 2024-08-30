@@ -1,6 +1,7 @@
 import React from "react";
 import { BiX } from "react-icons/bi";
 import { Snippet } from "@nextui-org/snippet";
+import { Button } from "@nextui-org/react";
 
 type ModalProps = {
   onClose?: () => void;
@@ -26,11 +27,18 @@ const MultiplayerModal = ({ onClose }: ModalProps) => {
         <BiX fontSize={"20px"} />
       </button>
       <div className="py-4 px-6 flex-initial text-large font-semibold flex flex-col gap-1"></div>
-      <div className="px-2 w-full">
-        <div className="flex justify-center flex-col items-center">
-          <p>Share the link below to play with your friend</p>
-          <Snippet>npm install @nextui-org/react</Snippet>
-          <button type="button">Create a Room</button>
+      <div className="px-4 w-full pb-4">
+        <div className="flex justify-center flex-col items-center gap-3">
+          <p>Share the link below to play with your friend!</p>
+          <Snippet symbol="" className="w-full">
+            roomID
+          </Snippet>
+          <Button
+            radius="md"
+            className="bg-gradient-to-tr from-pink-500 to-yellow-500 text-white shadow-lg"
+          >
+            Create a room
+          </Button>
         </div>
       </div>
     </div>
