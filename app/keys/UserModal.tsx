@@ -14,7 +14,7 @@ const UserModal = ({ onSuccess, onClose, setUserName }: ModalProps) => {
   const [hasError, setHasError] = useState<boolean>(false);
 
   const handleSubmit = () => {
-    if (isUserName) {
+    if (isUserName && isUserName.trim() != " ") {
       setUserName(isUserName);
       if (onClose) {
         onClose();
@@ -50,7 +50,7 @@ const UserModal = ({ onSuccess, onClose, setUserName }: ModalProps) => {
             className="text-sm flex gap-1 items-center opacity-75 hover:opacity-100 hover:text-orange-500 transition"
           >
             <BiArrowBack />
-            back to home
+            back to main menu
           </button>
         </Link>
       </div>

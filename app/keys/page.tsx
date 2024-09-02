@@ -8,6 +8,7 @@ import "./keys.css";
 import { Button } from "@nextui-org/react";
 import ModalWrapper from "@/components/modal/ModalWrapper";
 import UserModal from "./UserModal";
+import LeaderboardsModal from "./LeaderboardsModal";
 
 const Keys = () => {
   const [arr, setArr] = useState<number[]>([]);
@@ -19,6 +20,12 @@ const Keys = () => {
   );
   const [isOpenModal, setIsOpenModal] = useState<boolean>(true);
   const [userName, setUserName] = useState<string>("");
+  const [isOpenModalLeaderboards, setIsOpenModalLeaderboards] =
+    useState<boolean>(false);
+
+  const [gameResults, setGameResults] = useState<
+    { name: string; score: number }[]
+  >([]);
 
   const arrRef = useRef(arr);
   const givenRef = useRef(given);
@@ -100,181 +107,185 @@ const Keys = () => {
   //     }
   //   };
   // }, []);
-
-  const startCountdown = () => {
+  const startCountdown = (callback: () => void) => {
+    const timerElement = document.querySelector(".timer") as HTMLElement;
+    if (timerElement) {
+      timerElement.classList.remove("restart-animation");
+    }
     const getCountDown = document.querySelectorAll(".cd");
+    console.log(getCountDown); // Check if elements are selected
 
-    getCountDown.forEach((element) => {
-      element.classList.add("animate-countdown");
+    getCountDown.forEach((element, index) => {
+      const countdownElement = element as HTMLElement;
+      console.log(countdownElement.classList); // Check classList
+
+      countdownElement.classList.remove("animate-countdown");
+      void countdownElement.offsetWidth;
+      countdownElement.classList.add("animate-countdown");
+
+      if (index === getCountDown.length - 1) {
+        element.addEventListener(
+          "animationend",
+          () => {
+            callback();
+          },
+          { once: true }
+        );
+      }
     });
   };
+  const handleKeyPress = ({ key }: KeyboardEvent) => {
+    let value: number | null = null;
+    switch (key) {
+      case "ArrowUp":
+        value = 0;
+        break;
+      case "ArrowDown":
+        value = 1;
+        break;
+      case "ArrowLeft":
+        value = 2;
+        break;
+      case "ArrowRight":
+        value = 3;
+        break;
+      default:
+        return;
+    }
 
+    if (value !== null) {
+      setArr((prevArr) => {
+        const newArr = [...prevArr, value];
+        const limitedArr = newArr.slice(0, givenArrLength);
+        return limitedArr;
+      });
+    }
+  };
+
+  const handleSubmit = (e: KeyboardEvent) => {
+    if (e.key === " ") {
+      if (areTheyEqual()) {
+        const endTime = Date.now();
+        const startTime = startTimeRef.current || endTime;
+        const elapsedTime = (endTime - startTime) / 1000;
+
+        let points = 0;
+        if (elapsedTime <= 1.5) {
+          points = 3;
+          // console.log(`Elapsed time: ${elapsedTime}s - plus 3 points`);
+        } else if (elapsedTime > 1.5 && elapsedTime < 3) {
+          points = 2;
+          // console.log(`Elapsed time: ${elapsedTime}s - plus 2 points`);
+        } else if (elapsedTime >= 3) {
+          points = 1;
+          // console.log(`Elapsed time: ${elapsedTime}s - plus 1 point`);
+        }
+        setScore((prevScore) => prevScore + points);
+        const newGiven = generateRandomArray(givenArrLength);
+        setGiven(newGiven);
+        givenRef.current = newGiven;
+
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+        startTimeRef.current = Date.now();
+        intervalRef.current = setInterval(() => {
+          const newGiven = generateRandomArray(givenArrLength);
+          setGiven(newGiven);
+          givenRef.current = newGiven;
+        }, 5000);
+      }
+
+      setArr([]);
+    }
+  };
   const startGame = () => {
-    startCountdown();
+    // Start the interval for generating new arrays
     interval();
+
+    // Generate the initial random array for the game
     const initialGiven = generateRandomArray(givenArrLength);
     setGiven(initialGiven);
     givenRef.current = initialGiven;
 
-    const handleKeyPress = ({ key }: KeyboardEvent) => {
-      let value: number | null = null;
-      switch (key) {
-        case "ArrowUp":
-          value = 0;
-          break;
-        case "ArrowDown":
-          value = 1;
-          break;
-        case "ArrowLeft":
-          value = 2;
-          break;
-        case "ArrowRight":
-          value = 3;
-          break;
-        default:
-          return;
-      }
+    // Set the game duration (5 seconds in this case)
+    const gameDuration = 5000;
+    const gameEndTimeout = setTimeout(() => {
+      endGame();
+    }, gameDuration);
 
-      if (value !== null) {
-        setArr((prevArr) => {
-          const newArr = [...prevArr, value];
-          const limitedArr = newArr.slice(0, givenArrLength);
-          return limitedArr;
-        });
-      }
-    };
-
-    const handleSubmit = (e: KeyboardEvent) => {
-      if (e.key === " ") {
-        if (areTheyEqual()) {
-          const endTime = Date.now();
-          const startTime = startTimeRef.current || endTime;
-          const elapsedTime = (endTime - startTime) / 1000;
-
-          let points = 0;
-          if (elapsedTime <= 1.5) {
-            points = 3;
-            // console.log(`Elapsed time: ${elapsedTime}s - plus 3 points`);
-          } else if (elapsedTime > 1.5 && elapsedTime < 3) {
-            points = 2;
-            // console.log(`Elapsed time: ${elapsedTime}s - plus 2 points`);
-          } else if (elapsedTime >= 3) {
-            points = 1;
-            // console.log(`Elapsed time: ${elapsedTime}s - plus 1 point`);
-          }
-          setScore((prevScore) => prevScore + points);
-          const newGiven = generateRandomArray(givenArrLength);
-          setGiven(newGiven);
-          givenRef.current = newGiven;
-
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          startTimeRef.current = Date.now();
-          intervalRef.current = setInterval(() => {
-            const newGiven = generateRandomArray(givenArrLength);
-            setGiven(newGiven);
-            givenRef.current = newGiven;
-          }, 5000);
-        }
-
-        setArr([]);
-      }
-    };
-
+    // Add event listeners for key presses
     document.addEventListener("keydown", handleSubmit);
     window.addEventListener("keydown", handleKeyPress);
 
+    console.log("Game started");
+
+    // Return cleanup function
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
       document.removeEventListener("keydown", handleSubmit);
+
+      // Clear any intervals and timeouts
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      clearTimeout(gameEndTimeout);
     };
   };
-  // useEffect(() => {
-  //   const initialGiven = generateRandomArray(givenArrLength);
-  //   setGiven(initialGiven);
-  //   givenRef.current = initialGiven;
 
-  //   const handleKeyPress = ({ key }: KeyboardEvent) => {
-  //     let value: number | null = null;
-  //     switch (key) {
-  //       case "ArrowUp":
-  //         value = 0;
-  //         break;
-  //       case "ArrowDown":
-  //         value = 1;
-  //         break;
-  //       case "ArrowLeft":
-  //         value = 2;
-  //         break;
-  //       case "ArrowRight":
-  //         value = 3;
-  //         break;
-  //       default:
-  //         return;
-  //     }
+  const endGame = () => {
+    // Clear interval to stop generating new arrays
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
-  //     if (value !== null) {
-  //       setArr((prevArr) => {
-  //         const newArr = [...prevArr, value];
-  //         const limitedArr = newArr.slice(0, givenArrLength);
-  //         return limitedArr;
-  //       });
-  //     }
-  //   };
+    // Remove event listeners for key presses
+    window.removeEventListener("keydown", handleKeyPress);
+    document.removeEventListener("keydown", handleSubmit);
 
-  //   const handleSubmit = (e: KeyboardEvent) => {
-  //     if (e.key === " ") {
-  //       if (areTheyEqual()) {
-  //         const endTime = Date.now();
-  //         const startTime = startTimeRef.current || endTime;
-  //         const elapsedTime = (endTime - startTime) / 1000;
+    // Remove timer animation class
+    const timerElement = document.querySelector(".timer") as HTMLElement;
+    if (timerElement) {
+      timerElement.classList.remove("restart-animation");
+    }
+    console.log("UserName at endGame:", userName); // Debug userName
+    console.log("Score at endGame:", score); // Debug score
 
-  //         let points = 0;
-  //         if (elapsedTime <= 1.5) {
-  //           points = 3;
-  //           // console.log(`Elapsed time: ${elapsedTime}s - plus 3 points`);
-  //         } else if (elapsedTime > 1.5 && elapsedTime < 3) {
-  //           points = 2;
-  //           // console.log(`Elapsed time: ${elapsedTime}s - plus 2 points`);
-  //         } else if (elapsedTime >= 3) {
-  //           points = 1;
-  //           // console.log(`Elapsed time: ${elapsedTime}s - plus 1 point`);
-  //         }
-  //         setScore((prevScore) => prevScore + points);
-  //         const newGiven = generateRandomArray(givenArrLength);
-  //         setGiven(newGiven);
-  //         givenRef.current = newGiven;
+    const newGameResult = { name: userName, score };
 
-  //         if (intervalRef.current) {
-  //           clearInterval(intervalRef.current);
-  //         }
-  //         startTimeRef.current = Date.now();
-  //         intervalRef.current = setInterval(() => {
-  //           const newGiven = generateRandomArray(givenArrLength);
-  //           setGiven(newGiven);
-  //           givenRef.current = newGiven;
-  //         }, 5000);
-  //       }
+    setGameResults((prevResults) => {
+      console.log("Previous game results:", prevResults); // Debug previous state
+      return [...prevResults, newGameResult];
+    });
 
-  //       setArr([]);
-  //     }
-  //   };
+    console.log("New game result added:", newGameResult); // Debug new result
 
-  //   document.addEventListener("keydown", handleSubmit);
-  //   window.addEventListener("keydown", handleKeyPress);
+    // Open leaderboards modal at the end of the game
+    setIsOpenModalLeaderboards(true);
+  };
 
-  //   return () => {
-  //     window.removeEventListener("keydown", handleKeyPress);
-  //     document.removeEventListener("keydown", handleSubmit);
-  //     if (intervalRef.current) {
-  //       clearInterval(intervalRef.current);
-  //     }
-  //   };
-  // }, []);
+  const resetGame = () => {
+    setArr([]);
+
+    setMatches(new Array(givenArrLength).fill(false));
+    setScore(0);
+    startTimeRef.current = null;
+
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      window.removeEventListener("keydown", handleKeyPress);
+      document.removeEventListener("keydown", handleSubmit);
+    };
+  }, []);
 
   useEffect(() => {
     const newMatches = new Array(givenArrLength).fill(false);
@@ -321,6 +332,9 @@ const Keys = () => {
         return null;
     }
   };
+  useEffect(() => {
+    console.log("Game Results:", gameResults);
+  }, [gameResults]);
 
   return (
     <main>
@@ -349,6 +363,7 @@ const Keys = () => {
       <div>Array: {JSON.stringify(arr)}</div>
       <div>Given Array: {JSON.stringify(given)}</div>
       <div>Score: {score}</div>
+      <div>{userName}</div>
       <div className="flex gap-6 w-full items-center">
         {given.map((_, index) => (
           <span key={index}>{renderArrowIcon(index)}</span>
@@ -364,7 +379,24 @@ const Keys = () => {
             }}
             setUserName={setUserName}
             onSuccess={() => {
-              startGame();
+              startCountdown(() => {
+                startGame(); // Start the game only after the countdown ends
+              });
+            }}
+          />
+        </ModalWrapper>
+      )}
+      {isOpenModalLeaderboards && (
+        <ModalWrapper>
+          <LeaderboardsModal
+            onClose={() => setIsOpenModalLeaderboards(false)}
+            userDetails={gameResults}
+            onSuccess={() => {
+              console.log("pumasok");
+              resetGame();
+              startCountdown(() => {
+                startGame();
+              });
             }}
           />
         </ModalWrapper>
